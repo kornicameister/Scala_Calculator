@@ -55,8 +55,8 @@ class ExprLexical extends StdLexical {
   def chr(c: Char) = elem("", ch => ch == c)
 }
 
-case class ConversionException(message: String) extends Exception {
-
+class ConversionException(message: String) extends Exception {
+  override def getMessage: String = message
 }
 
 object Converter extends StandardTokenParsers {
@@ -95,7 +95,7 @@ object Converter extends StandardTokenParsers {
         case Success(tree, _) =>
           tree.rpn
         case e: NoSuccess => Console.err.println(e)
-          throw ConversionException(e.toString)
+          throw new ConversionException(e.toString)
       }
   }
 }

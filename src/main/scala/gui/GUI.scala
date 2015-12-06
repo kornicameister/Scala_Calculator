@@ -29,20 +29,31 @@ object GUI extends SimpleSwingApplication {
     contents += operatorPanel
     hGap = 10
   }
-  var hadError: AnyRef = Nil
+  var hadError: Boolean = false
 
   def calculate(): String = {
+    if (hadError){
+      displayPanel.text = ""
+      hadError = false
+      return ""
+    }
     val input = displayPanel.text
     try {
       val rpn = Converter.convert(input)
       val result = RPN.solveRPN(rpn)
       result.toString
     } catch {
-      case e: Exception => e.getMessage
+      case e: Exception =>
+        hadError = true
+        e.getMessage
     }
   }
 
   def onDot(input: String): String = {
+    if (hadError){
+      displayPanel.text = ""
+      hadError = false
+    }
     val text: String = displayPanel.text
     if (!text.isEmpty) {
       val lastChar: Char = text.last
@@ -54,7 +65,16 @@ object GUI extends SimpleSwingApplication {
   }
 
   def onC(): String = {
+    hadError = false
     ""
+  }
+
+  def onCharacter(input: String): String = {
+    if (hadError){
+      displayPanel.text = ""
+      hadError = false
+    }
+    displayPanel.text + input
   }
 
   def top = new MainFrame {
@@ -70,7 +90,7 @@ object GUI extends SimpleSwingApplication {
       case "=" => displayPanel.text = calculate()
       case "C" => displayPanel.text = onC()
       case "." => displayPanel.text = onDot(input)
-      case _ => displayPanel.text += input
+      case _ => displayPanel.text = onCharacter(input)
     }
   }
 
