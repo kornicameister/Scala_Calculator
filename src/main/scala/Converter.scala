@@ -23,30 +23,40 @@ class ExprLexical extends StdLexical {
   override def token: Parser[Token] = floatingToken | super.token
 
   def floatingToken: Parser[Token] =
-    rep1(digit) ~ optFraction ~ optExponent ^^
-      { case intPart ~ frac ~ exp => NumericLit(
-        (intPart mkString "") :: frac :: exp :: Nil mkString "")}
+    rep1(digit) ~ optFraction ~ optExponent ^^ { case intPart ~ frac ~ exp => NumericLit(
+      (intPart mkString "") :: frac :: exp :: Nil mkString "")
+    }
 
-  def chr(c:Char) = elem("", ch => ch==c )
-  def sign = chr('+') | chr('-')
-  def optSign = opt(sign) ^^ {
-    case None => ""
-    case Some(sign) => sign
-  }
-  def fraction = '.' ~ rep(digit) ^^ {
-    case dot ~ ff => dot :: (ff mkString "") :: Nil mkString ""
-  }
   def optFraction = opt(fraction) ^^ {
     case None => ""
     case Some(fraction) => fraction
   }
-  def exponent = (chr('e') | chr('E')) ~ optSign ~ rep1(digit) ^^ {
-    case e ~ optSign ~ exp => e :: optSign :: (exp mkString "") :: Nil mkString ""
+
+  def fraction = '.' ~ rep(digit) ^^ {
+    case dot ~ ff => dot :: (ff mkString "") :: Nil mkString ""
   }
+
   def optExponent = opt(exponent) ^^ {
     case None => ""
     case Some(exponent) => exponent
   }
+
+  def exponent = (chr('e') | chr('E')) ~ optSign ~ rep1(digit) ^^ {
+    case e ~ optSign ~ exp => e :: optSign :: (exp mkString "") :: Nil mkString ""
+  }
+
+  def optSign = opt(sign) ^^ {
+    case None => ""
+    case Some(sign) => sign
+  }
+
+  def sign = chr('+') | chr('-')
+
+  def chr(c: Char) = elem("", ch => ch == c)
+}
+
+case class ConversionException(message: String) extends Exception {
+
 }
 
 object Converter extends StandardTokenParsers {
@@ -85,7 +95,7 @@ object Converter extends StandardTokenParsers {
         case Success(tree, _) =>
           tree.rpn
         case e: NoSuccess => Console.err.println(e)
-          e.toString
+          throw ConversionException(e.toString)
       }
   }
 }

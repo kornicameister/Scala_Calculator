@@ -5,7 +5,6 @@ import main.scala.{Converter, RPN}
 import scala.swing._
 
 object GUI extends SimpleSwingApplication {
-
   val operatorList = List(
     "+",
     "-",
@@ -15,7 +14,6 @@ object GUI extends SimpleSwingApplication {
     "%",
     "C"
   )
-
   val numberPanel = new GridPanel(3, 3) {
     (1 to 9) foreach (x => contents += new CalcButton(x.toString))
     List("0", ".", "=") foreach (x => contents += new CalcButton(x))
@@ -26,16 +24,37 @@ object GUI extends SimpleSwingApplication {
   val displayPanel = new TextField(25) {
     horizontalAlignment = Alignment.Right
   }
-  val operationsPanel = new GridPanel(1, 2){
+  val operationsPanel = new GridPanel(1, 2) {
     contents += numberPanel
     contents += operatorPanel
     hGap = 10
   }
+  var hadError: AnyRef = Nil
 
-  def calculate(input: String): String = {
-    val rpn = Converter.convert(input)
-    val result = RPN.solveRPN(rpn)
-    result.toString
+  def calculate(): String = {
+    val input = displayPanel.text
+    try {
+      val rpn = Converter.convert(input)
+      val result = RPN.solveRPN(rpn)
+      result.toString
+    } catch {
+      case e: Exception => e.getMessage
+    }
+  }
+
+  def onDot(input: String): String = {
+    val text: String = displayPanel.text
+    if (!text.isEmpty) {
+      val lastChar: Char = text.last
+      if (lastChar == '.') {
+        return text
+      }
+    }
+    text + input
+  }
+
+  def onC(): String = {
+    ""
   }
 
   def top = new MainFrame {
@@ -48,9 +67,9 @@ object GUI extends SimpleSwingApplication {
 
   class CalcAction(input: String) extends swing.Action(input) {
     override def apply = input match {
-      case "=" => displayPanel.text = calculate(displayPanel.text)
-      case "C" => displayPanel.text = ""
-      case "." => if (!displayPanel.text.contains(".")) displayPanel.text += input
+      case "=" => displayPanel.text = calculate()
+      case "C" => displayPanel.text = onC()
+      case "." => displayPanel.text = onDot(input)
       case _ => displayPanel.text += input
     }
   }
